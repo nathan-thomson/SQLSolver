@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link id="styleTheme" rel="stylesheet" href="style.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<main class="page with-hotbar">
+    <section class="panel">
+    <button class="corner-right" onclick="logout()">LOG OUT</button> <!-- change back to div later when adding log out confirmation-->
+        <h1>Admin Dashboard</h1>
+
+        <div>
+            <p>Total Users: <span id="users">Loading...</span></p>
+            <p>Total Attempts: <span id="attempts">Loading...</span></p>
+            <p>Total Completions: <span id="completions">Loading...</span></p>
+        </div>
+
+        <table class="adminTable">
+            <thead>
+            <tr>
+                <th>Username</th>
+                <th>Date Created</th>
+                <th>Reset</th>
+                <th>Delete</th>
+            </tr>
+            </thead>
+            <tbody id="adminUsersBody"></tbody>
+        </table>
+
+    </section>
+</main>
+<script>
+    const API = "";
+
+    if(localStorage.getItem("isAdmin") !== "true"){
+        window.location.href = "login.html";
+    }
+
+    async function loadStats(){
+        try{
+            const response = await fetch(`${API}/admin/stats`);
+            const data = await response.json();
+
+            document.getElementById("users").textContent = data.totalUsers;
+            document.getElementById("attempts").textContent = data.totalAttempts;
+            document.getElementById("completions").textContent = data.totalCompletions;
+        } catch(e){console.error(e);
+        }
+    }
+    loadStats();
+
+    function logout(){
+        const confirmLogout = confirm("Are you sure you want to log out?");
+        if(!confirmLogout) return;
+        localStorage.removeItem("userId");
+        localStorage.removeItem("username");
+        localStorage.removeItem("isAdmin");
+        window.location.href = "index.html";
+    }
+
+    async function loadUsers(){
+        const response = await fetch(`${API}/admin/users`);
+        const data = await response.json();
+
+        const tableBody = document.getElementById("adminUsersBody");
+        tableBody.innerHTML = "";
+
+        data.users.forEach(user => {
+            const row = document.createElement("tr");
+
+            const usernameCell = document.createElement("td");
+            usernameCell.textContent = user.username;
+
+            const dateCell = document.createElement("td");
+            dateCell.textContent = new Date(user.created_at).toLocaleDateString();
+
+            //RESET BUTTON
+            const resetCell = document.createElement("td");
+            const resetBtn = document.createElement("button");
+            resetBtn.textContent = "RESET";
+            resetBtn.className = "reset-btn"
+
+            resetBtn.onclick = async () => {
+                if(!confirm(`Reset progress for ${user.username}?`)) return;
+                await fetch(API + `/users/${user.id}/reset`, {
+                    method: "POST"
+                });
+                showFadePopup(`Reset progress for ${user.username}`);
+            };
+            resetCell.appendChild(resetBtn);
+
+            //DELETE BUTTON
+            const deleteCell = document.createElement("td");
+            const deleteBtn = document.createElement("button");
+            deleteBtn.textContent = "DELETE";
+            deleteBtn.className = "delete-btn";
+
+            deleteBtn.onclick = async () => {
+                if(!confirm(`Delete progress for ${user.username}?`)) return;
+                await fetch(API + `/users/${user.id}`, {
+                    method: "DELETE"
+                });
+                showFadePopup(`Deleted ${user.username}`);
+                loadUsers(); //refresh table after delete
+            };
+            deleteCell.appendChild(deleteBtn);
+
+            row.append(usernameCell, dateCell, resetCell, deleteCell);
+            tableBody.appendChild(row);
+        });
+    }
+    loadUsers();
+
+</script>
+<script src="app.js"></script>
+</body>
+</html>

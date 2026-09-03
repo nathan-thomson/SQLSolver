@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!--https://www.w3schools.com/html/html_responsive.asp-->
+    <title>SQL Solver Settings</title>
+    <link id="styleTheme" rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav class="hotbar">
+    <div class="hotbar-inner">
+        <a class="navbtn" href="challenges.html">CHALLENGES</a>
+        <a class="navbtn" href="progress.html">PROGRESS</a>
+        <a class="navbtn" href="settings.html">PROFILE</a>
+        <a class="navbtn" href="leaderboard.html">LEADERBOARD</a>
+    </div>
+</nav>
+
+<main class="page with-hotbar">
+    <section class="panel">
+        <!--<div class="corner-right" data-logout>LOG OUT</div> -->
+        <button class="corner-right" onclick="logout()">LOG OUT</button> <!-- change back to div later when adding log out confirmation-->
+        <h1 class="title">PROFILE</h1>
+
+        <div class="profile-summary">
+            <div class="profile-block">
+                <div class="profile-label">USERNAME</div>
+                <div id="profileUsername" class="profile-value"></div>
+            </div>
+
+            <div class="profile-block">
+                <div class="profile-label">ACCOUNT CREATED</div>
+                <div id="profileCreated" class="profile-value"></div>
+            </div>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-name">SHOW ACHIEVEMENT POPUPS</div>
+            <div class="box" id="achievementToggle" data-checked="true"></div>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-name">SHOW HINTS</div>
+            <div class="box" id="hintToggle" data-checked="true"></div>
+        </div>
+
+       <!-- <div class="setting-row">
+            <div class="setting-name">DARK MODE</div>
+            <div class="box" id="themeToggle" data-checked="false"></div>
+        </div> -->
+
+        <div class="delete-area">
+
+            <button id="resetBtn" class="btn reset-btn" type="button">RESET ACCOUNT PROGRESS</button>
+            <div class="warn">Resets XP, attempts, completed challenges and achievements</div>
+
+            <button id="deleteBtn" class="btn delete-btn" type="button">DELETE ACCOUNT</button>
+            <div class="warn">CANNOT BE REVERSED</div>
+        </div>
+    </section>
+</main>
+
+
+
+<div id="fade-popup" class="fade-popup hidden"></div>
+
+<script src="app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Solver Progress</title>
+    <link id="styleTheme" rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav class="hotbar">
+    <div class="hotbar-inner">
+        <a class="navbtn" href="challenges.html">CHALLENGES</a>
+        <a class="navbtn" href="progress.html">PROGRESS</a>
+        <a class="navbtn" href="settings.html">PROFILE</a>
+        <a class="navbtn" href="leaderboard.html">LEADERBOARD</a>
+    </div>
+</nav>
+
+<main class="page with-hotbar">
+    <section class="panel">
+        <!--<div class="corner-right" data-logout>LOG OUT</div> -->
+        <button class="corner-right" onclick="logout()">LOG OUT</button> <!-- change back to div later when adding log out confirmation-->
+        <h1 class="title">PROGRESS</h1>
+
+        <div class="progress-wrap">
+            <div class="center" style="font-weight:1000;">CHALLENGES COMPLETE</div>
+            <div class="progress-bar">
+                <div id="progressFill"></div>
+            </div>
+            <div class="center small" style="margin-top:8px;">
+                <span id="completedValue">0</span>/<span id="totalValue">0</span> challenges
+            </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="progress">TOTAL SCORE: <span id="xpValue">0</span></div>
+        <div class="progress">CHALLENGE ATTEMPTS: <span id="attemptsValue">0</span></div>
+        <!--<div class="progress">ACHIEVEMENTS AWARDED: <span id="earnedAchievements">0</span></div>-->
+
+        <div class="hr"></div>
+
+        <div class="center" style="font-weight:1000; margin-bottom:6px;">ACHIEVEMENTS:</div>
+        <div class="achievement-grid">
+            <div class="achievement-box"></div>
+            <div class="achievement-box"></div>
+            <div class="achievement-box"></div>
+            <div class="achievement-box"></div>
+            <div class="achievement-box"></div>
+
+            <div class="achievement-box"></div>
+            <div class="achievement-box"></div>
+            <div class="achievement-box"></div>
+            <div class="achievement-box"></div>
+            <div class="achievement-box"></div>
+        </div>
+
+    </section>
+</main>
+
+
+<div id="fade-popup" class="fade-popup hidden achievement-popup"></div>
+
+<script src="app.js"></script>
+
+</body>
+</html>

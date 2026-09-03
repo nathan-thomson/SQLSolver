@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Solver Auth</title>
+    <link id="styleTheme" rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body data-page="auth">
+<main class="page">
+    <section class="panel">
+
+        <a href="index.html" class="corner-right">EXIT</a>
+
+        <h1 class="title title-auth">LOG IN OR REGISTER</h1>
+        <p id="authModeHint" class="center small" style="margin-top:-8px;"></p>
+
+        <label for="username" class="label">USERNAME:</label>
+        <input id="username" class="input" type="text" />
+
+        <label for="password" class="label">PASSWORD:</label>
+        <input id="password" class="input" type="password" />
+
+        <div class="help">If you already have an account, enter details then LOGIN, else, enter details then click REGISTER<br>Password must be at least 8 characters long.</div>
+
+
+        <div class="row">
+            <!-- no functionality yet -->
+            <button id="login-btn" class="btn btn-auth" type="button">LOGIN</button>
+            <button id="register-btn" class="btn btn-auth" type="button">REGISTER</button>
+        </div>
+    </section>
+</main>
+<div id="fade-popup" class="fade-popup hidden"></div>
+
+<script src="app.js"></script>
+
+
+<!-- auth logic -->
+<script>
+    const API_BASE = "";
+
+    function setMessage(text) {
+        const messageElement = document.getElementById("authMessage");
+        if (messageElement) messageElement.textContent = text || "";
+    }
+
+    async function postJSON(path, body) {
+        const res = await fetch(API_BASE + path, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Request failed");
+        return data;
+    }
+
+    document.getElementById("login-btn").addEventListener("click", async () => {
+        setMessage("");
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        try {
+            const data = await postJSON("/login", { username, password }); //only redirects after match
+
+            if(data.admin){
+                localStorage.setItem("isAdmin", "true"); //if admin true returned by backend then direct to admin page
+                localStorage.removeItem("userId");
+                localStorage.removeItem("username");
+                window.location.href = "admin.html";
+                return;
+            }
+
+            localStorage.removeItem("isAdmin"); //clears on normal login to ensure users dont stay accidently marked as admin
+            localStorage.setItem("userId", data.user.id);
+            localStorage.setItem("username", data.user.username);
+            window.location.href = "challenges.html";
+        } catch (err) {
+            showFadePopup("Incorrect Username or Password");
+        }
+    });
+
+    document.getElementById("register-btn").addEventListener("click", async () => {
+        setMessage("");
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        try {
+            const data = await postJSON("/register", { username, password });
+            localStorage.setItem("userId", data.user.id);
+            localStorage.setItem("username", data.user.username);
+            window.location.href = "challenges.html";
+        } catch (err) {
+            showFadePopup("Username or Password already exists");
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
+    <link id="styleTheme" rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+
+</div>
+<nav class="hotbar">
+    <div class="hotbar-inner">
+        <a class="navbtn" href="challenges.html">CHALLENGES</a>
+        <a class="navbtn" href="progress.html">PROGRESS</a>
+        <a class="navbtn" href="settings.html">PROFILE</a>
+        <a class="navbtn" href="leaderboard.html">LEADERBOARD</a>
+    </div>
+</nav>
+
+<main class="page with-hotbar">
+    <section class="panel">
+
+        <button class="corner-right" onclick="logout()">LOG OUT</button>
+
+        <h1 class="title">LEADERBOARD</h1>
+
+        <!--<div class="center small" style="margin-bottom: 10px;">
+            Top users ranked by XP
+        </div>-->
+
+        <div class="hr"></div>
+
+        <!-- leaderboard table  -->
+        <div id="leaderboardArea">
+            <div id="leaderboardTable"></div>
+        </div>
+
+    </section>
+</main>
+
+<div id="fade-popup" class="fade-popup hidden achievement-popup"></div>
+
+<script src="app.js"></script>
+<script>
+    //const API = "/nfb22130-nodejs";
+    async function loadLeaderboard(){
+        const response = await fetch(`${API}/leaderboard`);
+        const data = await response.json(); //recieve json data from endpoint, translate into javascript data
+        const currentUsername = localStorage.getItem("username"); //get current username from local storage
+
+        const tableContainer = document.getElementById("leaderboardTable");
+        tableContainer.innerHTML = ""; //empty table
+
+        const table = document.createElement("table");
+        table.className = "leaderboardTable";
+
+        const headerRow = document.createElement("tr"); //create header row
+
+        const leaderboardHeader = ["Rank", "Username", "XP"];
+        leaderboardHeader.forEach(text => {
+            const tableHeader = document.createElement("th");
+            tableHeader.textContent = text;
+            headerRow.appendChild(tableHeader);
+        });
+        table.appendChild(headerRow);
+
+        data.leaderboard.forEach((user, index) => {
+            const tableRow = document.createElement("tr");
+
+            if(index ===0) tableRow.classList.add("gold");
+            else if (index === 1) tableRow.classList.add("silver");
+            else if (index === 2) tableRow.classList.add("bronze");
+
+            if(user.username === currentUsername){
+                tableRow.classList.add("you");
+            }
+
+            const rankCell = document.createElement("td");
+            rankCell.textContent = index + 1;
+
+            const usernameCell = document.createElement("td");
+            const nameSpan = document.createElement("span");
+            nameSpan.textContent = user.username;
+            usernameCell.appendChild(nameSpan);
+
+            if (user.username === currentUsername){
+                const badge = document.createElement("span")
+                badge.textContent = "[YOU]";
+                badge.className = "youBadge";
+                usernameCell.appendChild(badge); //add badge to current username thats logged in
+            }
+
+            const xpCell = document.createElement("td");
+            xpCell.textContent = user.xp;
+
+            tableRow.appendChild(rankCell);
+            tableRow.appendChild(usernameCell);
+            tableRow.appendChild(xpCell);
+
+            table.appendChild(tableRow);
+        });
+        tableContainer.appendChild(table);
+    }
+    loadLeaderboard();
+</script>
+
+</body>
+</html>

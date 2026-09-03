@@ -1,0 +1,71 @@
+<!-- https://randomwordgenerator.com/name.php for use in challenge tables -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Solver Challenges</title>
+    <link id="styleTheme" rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <!-- https://www.npmjs.com/package/canvas-confetti -->
+</head>
+<body>
+
+<nav class="hotbar">
+    <div class="hotbar-inner">
+        <a class="navbtn" href="challenges.html">CHALLENGES</a>
+        <a class="navbtn" href="progress.html">PROGRESS</a>
+        <a class="navbtn" href="settings.html">PROFILE</a>
+        <a class="navbtn" href="leaderboard.html">LEADERBOARD</a>
+    </div>
+</nav>
+
+<main class="page with-hotbar">
+    <section class="panel">
+        <!--<div class="corner-right" data-logout>LOG OUT</div> -->
+        <button class="corner-right" onclick="logout()">LOG OUT</button> <!-- change back to div later when adding log out confirmation-->
+        <h1 class="title">CHALLENGES</h1>
+        <div class="hr"></div>
+
+        <div id="challengeArea" >
+
+            <div id="challengeList" class="levels-grid"></div>
+
+            <h2 id="challengeTitle" class="center" ></h2>
+
+            <div id="sql-section">
+
+    <pre id="challengePrompt"> </pre>
+
+                <pre id="schemaInfo"> </pre>
+
+                <pre id="hintBox"> </pre>
+
+                <textarea id="sqlInput" placeholder="Write your SQL here..."> </textarea>
+
+                <div class="row">
+                    <button id="submitBtn" class="btn" type="button">SUBMIT</button>
+                </div>
+
+                <p id="message" class="center" ></p>
+
+                <div id="queryResultsArea" hidden>
+                    <h3>Query Results</h3>
+                    <div id="queryResults"></div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+</main>
+
+
+
+<div id="fade-popup" class="fade-popup hidden achievement-popup"></div>
+
+<script src="app.js"></script>
+
+</body>
+</html>

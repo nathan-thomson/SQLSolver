@@ -1,0 +1,813 @@
+/* GLOBAL */
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: 'Rubik', sans-serif;
+    color: #2c6fb8;
+    background: #5FA8E8; /*CHATGPT matched color to logo*/
+}
+
+textarea, pre, code{
+    font-family: 'JetBrains Mono', monospace;
+}
+
+
+/*GENERAL LAYOUT*/
+/* center basic page content */
+.page{
+    min-height: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 12px;
+    background: #5FA8E8;
+}
+
+/* Main wireframe panel */
+.panel {
+    width: min(1120px, 94vw);
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    padding: 28px; /* controls spacing inside */
+    background: white;
+    box-shadow: 0 8px 24px rgba(2, 6, 23, 0.14),
+    0 22px 40px rgba(2, 6, 23, 0.12);
+}
+
+.panel::after{
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background-image: url("assets/SQLSolverLogo.png");
+    background-repeat: repeat;
+    background-size: 220px;
+
+    filter: grayscale(1) brightness(0.9);
+    opacity: 0.05;
+    transform: rotate(-20deg);
+    transform-origin: center;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.panel::before {
+    content: "";
+    position: absolute;
+    inset: 14px; /* white gap size */
+
+    border: 3px solid #5FA8E8;
+    border-radius: 14px;
+
+    pointer-events: none;
+}
+
+.panel-inner{
+    background: transparent;
+    border-radius: 14px;
+    padding: 18px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Top corner labels like HELP / EXIT / BACK */
+.corner-left, .corner-right {
+    position: absolute;
+    top: 12px;
+    font-weight: 700;
+}
+.corner-left { left: 12px; }
+.corner-right {
+    cursor: pointer;
+    padding: 10px 16px;
+    font-weight: bold;
+    border-radius: 999px;
+    background-color: red; /*rounded red button*/
+    box-shadow: 0 2px 6px rgba(0,0,0, 0.2);
+    color: white;
+    top: 20px;
+    right: 20px;
+}
+.corner-right:hover{
+    background-color: darkred; /*dark red on hover and lift up a bit for interactivity*/
+    transform: translateY(-1px);
+}
+.corner-right:active {
+    transform: scale(0.96); /*shrink a little on click*/
+}
+
+
+/*WORDS EG TITLES*/
+
+/* Page title */
+.title {
+    text-align: center;
+    margin: 20px 0 18px;
+    font-size: 48px;
+    font-weight: 800;
+    letter-spacing: 5px;
+}
+
+.title.title-auth{
+    letter-spacing: 0;
+    margin-top: 75px;
+    margin-bottom: 100px;
+}
+
+.center {
+    text-align: center;
+    font-size: 30px;
+    margin-top: 50px;
+}
+
+.progress{
+    font-size: 30px;
+    font-weight: 1000;
+    margin: 30px 10px 20px;
+}
+
+
+/*FORMS*/
+
+/* Labels and inputs */
+.label {
+    display: block;
+    width: 100%;
+    max-width: 800px;
+    text-align: center;
+    margin: 14px auto 8px;
+    font-weight: 700;
+    font-size: 18px;
+    padding-top: 20px;
+}
+.input {
+    display: block;
+    width: 100%;
+    max-width: 800px;
+    padding: 14px;
+    margin: 0 auto 10px;
+    border: 1.5px solid #AFCDEE;
+    border-radius: 10px;
+    font-size: 20px;
+    text-align: center;
+}
+
+.help{
+    text-align: center;
+    margin: 6px auto 20px;
+    padding-bottom: 50px;
+    font-weight: bold;
+}
+
+
+
+/*BUTTONS AND LINKS*/
+/* Buttons row */
+.row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 22px;
+    flex-wrap: wrap;
+}
+.btn {
+    min-width: 150px;
+    padding: 14px 16px;
+    border: 1.5px solid #AFCDEE;
+    color: #2c6fb8;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.85);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn.btn-begin{
+    min-height: 125px;
+    min-width: 250px;
+    margin-top: 40px;
+    font-size: 50px;
+}
+
+.btn.btn-auth{
+    min-height: 100px;
+    min-width: 200px;
+    font-size: 25px;
+}
+
+.link {
+    display: block;
+    text-align: center;
+    margin-top: 12px;
+    margin-bottom: 75px;
+    font-size: 12px;
+    font-weight: 700;
+    color: black;
+    text-decoration: none;
+}
+.link:hover { text-decoration: underline; }
+
+/*NAVIGATION*/
+/* Bottom hotbar */
+.with-hotbar { padding-top: 0px; }
+
+.hotbar {
+    position: sticky;
+    top: 0;
+
+    /* ✨ modern light glass look */
+    background: rgba(255, 255, 255, 0.85);
+    border-bottom: 1px solid rgba(30, 41, 59, 0.15);
+    backdrop-filter: blur(10px);
+
+    z-index: 1000;
+    margin-bottom: 10px;
+}
+
+.hotbar-inner {
+    display: flex;
+}
+
+.navbtn {
+    flex: 1;
+    text-align: center;
+    padding: 22px 0;
+    font-weight: 900;
+    text-decoration: none;
+
+    /* softer text like dark mode */
+    color: #475569;
+
+    border-right: 1px solid rgba(30, 41, 59, 0.12);
+    transition: 0.18s ease;
+}
+
+.navbtn:last-child {
+    border-right: none;
+}
+
+.navbtn:hover {
+    color: #0f172a;
+    background: rgba(95, 168, 232, 0.12);
+}
+
+.navbtn.active {
+    background: rgba(95, 168, 232, 0.18);
+    color: #0f172a;
+    box-shadow: inset 0 -3px 0 #5FA8E8;
+}
+
+/*PAGE SPECIFIC ODD JOBS*/
+
+/*challenges*/
+
+/* Levels grid (5 big boxes) */
+.levels-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+    gap: 18px;
+    margin-top: 18px;
+}
+
+/* 1 column on small screens */
+@media (max-width: 720px) {
+    .levels-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .title{
+        font-size: 38px;
+        letter-spacing: 2px;
+        text-align: center;
+    }
+
+    .title.title-auth{
+        margin-bottom: 40px;
+    }
+
+    .achievement-grid{
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    .achievement-card img{
+        width: 60px;
+        height: 60px;
+    }
+}
+
+.level-card {
+    border: 2px solid #3B82C4;
+    border-radius: 16px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 10px 24px rgba(2, 6, 23, 0.12);
+}
+.level-card:hover{
+    transform: translateY(-5px);
+    box-shadow: 0 0 0 2px #5FA8E8,
+                0 18px 35px rgba(2, 6, 23, 0.18);
+}
+
+.level-img {
+    width: 100%;
+    aspect-ratio: 16/6;   /*https://www.w3schools.com/Cssref/css_pr_aspect-ratio.php*/
+    object-fit: cover;
+    display: block;
+    border-bottom: 2px solid black;
+}
+
+.level-header {
+    padding: 14px 14px 8px;
+}
+
+.level-kicker {
+    font-weight: 900;
+    letter-spacing: 1px;
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+.level-title {
+    font-weight: 900;
+    font-size: 22px;
+    margin-top: 6px;
+}
+
+.level-desc {
+    font-size: 14px;
+    margin-top: 6px;
+    opacity: 1;
+    line-height: 1.3;
+}
+
+.level-stages {
+    padding: 10px 14px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.level-stage-btn {
+    min-width: 0;
+    flex: 1 1 220px;
+}
+
+#challengeList,
+#challengePrompt,
+#schemaInfo,
+#sqlInput,
+#message {
+    background: #fff;
+    position: relative;
+    z-index: 2;         /* ensures sit above watermark layer */
+}
+
+/*#challengeArea{ scroll-margin-top: 80px; }*/
+#challengeArea, #challengeTitle{ margin-top:20px; }
+#challengePrompt, #schemaInfo{ white-space:pre-wrap; border:1.5px solid #AFCDEE; padding:10px; border-radius:8px; }
+#hintBox{ white-space:pre-wrap; border:1px dashed #000; padding:10px; border-radius:8px; }
+#sqlInput{ width:100%; height:120px; font-size:16px; background-color: #F8FAFC; }
+#message{ font-size:18px; }
+
+#submitBtn{
+    background-color: #5FA8E8;
+    color: white;
+    border: none;
+    font-weight: 800;
+}
+#submitBtn:hover{
+    background-color: #4a90d6;
+    transform: translateY(-2px);}
+#submitBtn:active {
+    transform: scale(0.97);
+}
+
+.completed-stage {
+    border: 2px solid green;
+}
+.completed-stage::before{
+    content: "\2714";
+    color: green;
+    margin-right: 6px;
+}
+
+.queryResultsTable{
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.queryResultsTable th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
+
+.queryResultsTable th, .queryResultsTable td{
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+}
+
+.setting-row{
+    font-size: 20px;
+    margin: 30px 20px 10px;
+    text-align: center;
+    font-weight:750;
+}
+
+.delete-area{
+    font-size: 20px;
+    text-align: center;
+    margin-top: 200px;
+    font-weight:750;
+}
+
+.progress-bar{
+    width: 70%;
+    max-width: 500px;
+    margin: 12px auto 0;
+
+    height: 22px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.1);
+    overflow: hidden; /*keeps fill rounded*/
+    border: 1px solid #AFCDEE;
+}
+
+#progressFill {
+    height: 100%;
+    width: 0;
+    background: #5FA8E8;
+    border-radius: 999px;  /* rounded fill */
+    transition: width 0.4s ease;
+}
+
+.subtitle{
+    text-align: center;
+    font-size: 18px;
+    color: rgba(0, 0, 0, 0.65);
+    margin-top: -12px;
+    margin-bottom: 30px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/*POP UPS*/
+
+.fade-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: darkred;
+    color: white;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    opacity: 0;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    z-index: 1000;
+    white-space: pre-line;
+}
+
+.fade-popup.show{
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.02)
+}
+
+.hidden{
+    display: none;
+}
+
+.achievement-popup{
+    background: green;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.4rem;
+    letter-spacing: 0.5px;
+}
+
+.show.achievement-popup{
+    animation: pulse 1.6s ease-in-out 1;
+    box-shadow: 0 0 30px #22c55e;
+}
+
+@keyframes pulse {  /*https://www.geeksforgeeks.org/css/css-pulse-animation/*/
+    0% {transform: translate(-50%, -50%) scale(0.8);}
+    20% {transform: translate(-50%, -50%) scale(1.15);}
+    40% {transform: translate(-50%, -50%) scale(0.95);}
+    60% {transform: translate(-50%, -50%) scale(1.05);}
+    80% {transform: translate(-50%, -50%) scale(0.95);}
+    100% {transform: translate(-50%, -50%) scale(1.02);}
+}
+
+
+/*PLACEHOLDERS TO BE REMOVED*/
+
+.logo{
+    width: 350px;
+    max-width: 80%;
+    display: block;
+    margin: 40px auto;
+}
+
+.temp1{
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 20px;
+}
+
+/*MAIN FURTHER CSS*/
+/*INPUT FINISH*/
+
+.input {
+    border: 1px solid rgba(15, 23, 42, 0.15); /*Dark blue/navy colour*/
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.input:focus {
+    outline: none;
+    border-color: rgba(15, 23, 42, 0.40);             /*shadow on button press*/
+    box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.08);
+}
+
+/*BUTTON FINISH*/
+
+.btn {
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(2, 6, 23, 0.12); /*raise button, shadow*/
+    background: rgba(15, 23, 42, 0.03);
+}
+
+.btn:active {
+    transform: translateY(0px);
+    box-shadow: none;
+}
+
+
+/*Achievements*/
+
+.achievement-grid{
+    display: grid;
+    grid-template-columns: repeat(5, 120px); /*always 5*/
+    gap: 14px;
+    max-width: 520px;      /* keeps it neat inside panel */
+    margin: 0 auto;
+    justify-content: center;
+    padding-top: 20px;
+}
+
+/* box */
+.achievement-box{
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border: 1.5px solid #AFCDEE;
+    border-radius: 12px;
+    padding: 5px;
+    background: #fff;
+}
+
+/* earned = clear highlight */
+.achievement-box.earned{
+    background: rgba(95, 168, 232, 0.18);
+    border-width: 3px;
+}
+
+/* locked = dim ONLY the icon (not tooltip/border) */
+.achievement-box:not(.earned) .ach-img{
+    opacity: 0.35;
+    filter: grayscale(1);
+}
+
+/* icon sizing */
+.ach-img{
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+/* tooltip */
+.achievement-tooltip{
+    position: absolute;
+    left: 50%;
+    bottom: 110%;
+    transform: translateX(-50%);
+    width: 220px;
+    background: rgba(15, 23, 42, 0.95);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* show tooltip on hover (desktop) */
+.achievement-box:hover .achievement-tooltip{
+    opacity: 1;
+}
+
+/* tooltip text */
+.achievement-tooltip .t-title{
+    font-weight: 800;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+.achievement-tooltip .t-desc{
+    font-size: 12px;
+    line-height: 1.25;
+}
+
+/*SETTINGS PAGE*/
+
+.profile-summary{
+    margin: 25px auto 35px auto; /*Keeps centered on different screen sizes after max width*/
+    padding: 22px;
+    border-radius: 14px;
+    background: #f5f5f5;
+    text-align: center;
+    max-width: 700px; /*Limits width of background*/
+    width: 100%;
+}
+
+.profile-block{
+    margin-bottom: 18px;
+}
+
+.profile-label{
+    font-size: 1rem;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 4px; /* smaller gap between label and value */
+    letter-spacing: 1px;
+}
+
+.profile-value{
+    font-size: 1.5rem;   /* makes username/date bigger */
+    font-weight: 700;
+    color: #111;
+}
+
+.delete-area{
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;   /* centers buttons horizontally */
+    gap: 12px;             /* space between items */
+}
+
+.reset-btn{
+    background: yellow;
+    color: black;
+    margin-top: 40px;
+}
+
+.reset-btn:hover{
+    background: #eab308;
+    color: black;
+}
+
+.delete-btn{
+    background: red;
+    color: white;
+    margin-top: 50px;
+}
+
+.delete-btn:hover{
+    background: darkred;
+    color: white;
+}
+
+.setting-name{
+    padding-top: 50px;
+}
+.box{
+    width: 34px;
+    height: 34px;
+    border: 2px solid black;
+    border-radius: 8px;
+    display: inline-block;
+    cursor: pointer;
+    background: white;
+    margin-top: 8px;
+}
+
+.box[data-checked="true"]{
+    background: #5FA8E8;
+}
+
+.box[data-checked="true"]::after{
+    content: "\2714";   /*https://www.w3schools.com/charsets/ref_utf_dingbats.asp*/
+    display: block;
+    text-align: center;
+    line-height: 30px;
+    font-weight: 900;
+    color: black;
+}
+
+.box[data-checked="false"]{
+    background: white;
+}
+
+
+/*LEADERBOARD*/
+
+.leaderboardTable{
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    text-align: center;
+    font-size: 1.25rem;
+}
+
+.leaderboardTable tr{
+    background: rgba(255, 255, 255, 0.7);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.leaderboardTable tr:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
+
+.leaderboardTable th{
+    padding:8px 12px;
+    border-bottom: 2px solid lightgray;
+    color: #1e3a8a;
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+
+.leaderboardTable td{
+    padding: 14px 12px;
+    color: #1e3a8a;
+    border-bottom: 2px solid #dbeafe;
+}
+
+.leaderboardTable td:first-child{ /*rank, first of rank, name and XP*/
+    font-weight: 900;
+    font-size: 1.4rem;
+}
+
+#leaderboardArea{
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 18px;
+    backdrop-filter: blur(6px);
+    /*padding: 16px;
+    margin-top: 20px;*/
+}
+
+.gold td:first-child::before{
+    content: '\1F947';
+    margin-right: 6px;
+}
+.gold td{
+    background-color: #fff3c4;
+}
+
+.silver td:first-child::before{
+    content: '\1F948';
+    margin-right: 6px;
+}
+.silver td{
+    background-color: #e9eef3;  /*https://www.quackit.com/html/templates/tables/leaderboard_ranking_table.cfm*/
+}
+
+.bronze td:first-child::before{
+    content: '\1F949';
+    margin-right: 6px;
+}
+.bronze td {
+    background-color: #f6d8c3;
+}
+
+.youBadge{
+    display: inline-block;
+    /*background: #2c6fb8;*/
+    color: #2c6fb8;;
+    font-size: 20px;
+    font-weight: 900;
+    margin-left: 40px;
+    text-align: right;
+}
+
+
+/*  ADMIN TABLE  */
+
+.adminTable td{
+    vertical-align: middle;
+}
+
+.adminTable .reset-btn,
+.adminTable .delete-btn {
+    display: inline-block;
+    margin: 0;
+}
