@@ -427,9 +427,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
-function logout(){
+async function logout(){
     const confirmLogout = confirm("Are you sure you want to log out?");
     if(!confirmLogout) return;
+    await fetch("/logout", {method: "POST"}); //calls method which clears session
     localStorage.removeItem("userId");
     localStorage.removeItem("username");
     localStorage.removeItem("isAdmin");

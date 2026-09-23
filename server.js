@@ -5,16 +5,16 @@ import bcrypt from "bcrypt";
 import pg from "pg";
 import path from "path";
 import { fileURLToPath } from "url";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+import { rateLimit } from "express-rate-limit";
 
 const { Pool } = pg;
+const PgStore = connectPg(session);
 
 const app = express();                          //https://www.w3schools.com/nodejs/nodejs_path.asp, https://www.w3schools.com/nodejs/nodejs_url.asp
 const _filename = fileURLToPath(import.meta.url); //https://nodejs.org/api/url.html#urlfileurltopathurl, https://nodejs.org/api/esm.html#importmetaurl
 const _dirname = path.dirname(_filename);
-app.use(express.json());
-app.use(cors()); // dev only
-app.use(express.static(path.join(_dirname, "src")));
-app.use("/assets", express.static(path.join(_dirname, "assets")));
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(_dirname, "src", "index.html"));
@@ -36,8 +36,86 @@ const pool = new Pool({
     database: process.env.DB_NAME,
 });
 
-pool.on("connect", (client) => {
-    client.query("SET search_path TO nfb22130"); //allow for direct SQL instead of nfb22130....
+const sandboxPool = new Pool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.SANDBOX_DB_USER,
+    password: process.env.SANDBOX_DB_PASSWORD,
+    database: process.env.DB_NAME,
+    statement_timeout: 3000,
+    max: 5,
+});
+
+app.set("trust proxy", 1);
+app.use(express.json());
+app.use(cors()); // dev only
+app.use(session({
+    store: new PgStore({ pool, createTableIfMissing: true }), //creates session table, holds session id, data and expiry time
+    secret: process.env.SESSION_SECRET, //sig calculated from session ID and secret
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true, //JS cant read it
+        sameSite: "lax", //browser wont send cookie if another website attacks
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 1000 * 60 * 60 * 24 * 7, //expires after 7 days
+    },
+}))
+app.use(express.static(path.join(_dirname, "src")));
+app.use("/assets", express.static(path.join(_dirname, "assets")));
+
+//https://expressjs.com/en/resources/middleware/session/
+//https://github.com/voxpelli/node-connect-pg-simple
+//https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies
+//https://www.postgresql.org/docs/current/runtime-config-client.html
+//https://www.npmjs.com/package/express-rate-limit
+
+function startSession(req, data) {
+    return new Promise((resolve, reject) => {
+        req.session.regenerate(err => {
+            if (err) return reject(err);
+            Object.assign(req.session, data);
+            resolve();
+        });
+    });
+}
+
+function requireLogin(req, res, next) {
+    if (!req.session.userId) return res.status(401).json({ error: "Not logged in" });
+    next();
+}
+
+function requireAdmin(req, res, next) {
+    if (!req.session.isAdmin) return res.status(403).json({ error: "Admins only" });
+    next();
+}
+
+function requireSelfOrAdmin(req, res, next) {
+    const userId = Number(req.params.userId);
+    if (!Number.isInteger(userId)) return res.status(400).json({ error: "Bad userId" });
+    if (req.session.isAdmin) return next();
+    if (!req.session.userId) return res.status(401).json({ error: "Not logged in" });
+    if (req.session.userId !== userId) return res.status(403).json({ error: "Not your account" });
+    next();
+}
+
+//max 10 failed login attempts per IP per 15 min, successful login dont count
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    skipSuccessfulRequests: true,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    message: { error: "Too many login attempts, please try again in 15 minutes."},
+});
+
+//max 5 acc per IP per hour,
+const registerLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: 5,
+    standardHeaders: "draft-7",
+    legacyHeaders: "draft-7",
+    message: { error: "Too many accounts created, please try again later"},
 });
 
 // Simple password rule: 8+ chars
@@ -46,7 +124,7 @@ function passwordOk(pw) {
 }
 
 // REGISTER
-app.post("/register", async (req, res) => {
+app.post("/register", registerLimiter, async (req, res) => {
     const username = (req.body.username || "").trim();
     const password = req.body.password;
 
@@ -71,7 +149,9 @@ app.post("/register", async (req, res) => {
             [username, password_hash]
         );
 
-        res.status(201).json({ user: inserted.rows[0] });
+        const user = inserted.rows[0];
+        await startSession(req, { userId: user.id });
+        res.status(201).json({ user });
     } catch (e) {
         console.error("Register Error: ", e.message);
         console.error(e);
@@ -80,7 +160,7 @@ app.post("/register", async (req, res) => {
 });
 
 // LOGIN
-app.post("/login", async (req, res) => {
+app.post("/login", loginLimiter, async (req, res) => {
     const username = (req.body.username || "").trim();
     const password = req.body.password;
 
@@ -88,10 +168,14 @@ app.post("/login", async (req, res) => {
         return res.status(400).json({ error: "Username and password required" });
     }
 
-    if(username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD){
-        return res.json({admin: true}); //if admin credentials match store admin true
-    }
+
     try {
+
+        if(username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD){
+            await startSession(req, { isAdmin: true });
+            return res.json({ admin: true });
+        }
+
         const result = await pool.query(
             "SELECT id, username, password_hash FROM users WHERE username = $1",
             [username]
@@ -105,6 +189,7 @@ app.post("/login", async (req, res) => {
         if (!ok) return res.status(401).json({ error: "Invalid credentials" });
 
         // success (no sessions/JWT yet)
+        await startSession(req, { userId: userId });
         res.json({ user: { id: user.id, username: user.username } });
     } catch (e) {
         console.error(e);
@@ -112,14 +197,21 @@ app.post("/login", async (req, res) => {
     }
 });
 
+app.post("/logout", (req, res) => {
+    req.session.destroy(() => {
+        res.clearCookie("connect.sid");
+        res.json({ ok: true });
+    });
+});
+
 
 
 
 //  CHALLENGES DATA , ALSO USED TO DISPLAY INDICATOR OF COMPLETED CHALLENGE
 //IF CHALLENGE COMPLETED ADD TRUE MARKER
-app.get("/challenges", async (req, res) => {
+app.get("/challenges", requireLogin, async (req, res) => {
     try {                  //loads all levels, to become available on menu
-        const userId = req.query.userId;
+        const userId = req.session.userId;
         const q = await pool.query(
             `
             SELECT c.id, c.title, c.level_num, c.stage_num,
@@ -163,9 +255,10 @@ app.get("/challenges/:id", async (req, res) => {
 });
 
 //PULLS EXPECTED FROM DB, COMPARES AGAINST INPUT
-app.post("/challenges/:id/submit", async (req, res) => {
+app.post("/challenges/:id/submit", requireLogin, async (req, res) => {
     const id = Number(req.params.id);
-    const { sql, userId } = req.body;
+    const { sql } = req.body;
+    const userId = req.session.userId;
 
     if (!Number.isInteger(userId)) {
         return res.status(400).json({ error: "Missing userId"});
@@ -198,7 +291,7 @@ app.post("/challenges/:id/submit", async (req, res) => {
                 }
                 //let userRows;
                 try{
-                    const userResult = await pool.query(sql);
+                    const userResult = await sandboxPool.query(sql);
                     userRows = userResult.rows;
 
                     if (userRows.length > 0) { //blocks potential error on 0 rows return
@@ -213,7 +306,7 @@ app.post("/challenges/:id/submit", async (req, res) => {
                     });
                 }
 
-                const expectedRows = (await pool.query(challenge.expected_sql)).rows;
+                const expectedRows = (await sandboxPool.query(challenge.expected_sql)).rows;
 
                 const a = normaliseRows(userRows, !challenge.requires_order); //a = normalisedUserRows if challenge dosnt need ORDER BY
                 const b = normaliseRows(expectedRows, !challenge.requires_order); //b = normalisedExpectedRows
@@ -282,7 +375,7 @@ app.post("/challenges/:id/submit", async (req, res) => {
 //Total XP achieved, No of challenge attempts
 //seperates progress from challenge logic (modular)
 
-app.get("/users/:userId/progress", async (req, res) => {
+app.get("/users/:userId/progress", requireSelfOrAdmin , async (req, res) => {
 
     const userId = Number(req.params.userId);
 
@@ -331,7 +424,7 @@ app.get("/users/:userId/progress", async (req, res) => {
 });
 
 //create endpoint for retrieving username and date for profile page
-app.get("/users/:userId", async (req, res) => {
+app.get("/users/:userId", requireSelfOrAdmin, async (req, res) => {
     const userId = Number(req.params.userId);
     if (!Number.isInteger(userId)) return res.status(400).json({ error: "Bad userId" });
 
@@ -472,7 +565,7 @@ async function awardAchievements(userId) {
 }
 
 // RESET progress (keeps the user account)
-app.post("/users/:userId/reset", async (req, res) => {
+app.post("/users/:userId/reset", requireSelfOrAdmin, async (req, res) => {
     const userId = Number(req.params.userId);
     if (!Number.isInteger(userId)) return res.status(400).json({ error: "Bad userId" });
 
@@ -504,7 +597,7 @@ app.post("/users/:userId/reset", async (req, res) => {
 });
 
 // DELETE account
-app.delete("/users/:userId", async (req, res) => {
+app.delete("/users/:userId", requireSelfOrAdmin , async (req, res) => {
     const userId = Number(req.params.userId);
     if (!Number.isInteger(userId)) return res.status(400).json({ error: "Bad userId" });
 
@@ -535,7 +628,7 @@ app.delete("/users/:userId", async (req, res) => {
 
 //ADMIN PAGE
 
-app.get("/admin/stats", async (req, res) => {
+app.get("/admin/stats", requireAdmin, async (req, res) => {
     const users = await pool.query("SELECT COUNT(*) FROM users");
     const attempts = await pool.query("SELECT SUM(attempts) FROM user_stats");
     const completions = await pool.query("SELECT COUNT(*) FROM user_completed_challenges");
@@ -548,7 +641,7 @@ app.get("/admin/stats", async (req, res) => {
 });
 
 //pull user details to display in admin page table
-app.get("/admin/users", async (req, res) => {
+app.get("/admin/users", requireAdmin, async (req, res) => {
     try{
         const result = await pool.query(`
         SELECT id, username, created_at
@@ -581,4 +674,5 @@ app.get("/leaderboard", async (req, res) => {
     }
 });
 
-app.listen(3000, "0.0.0.0",  () => console.log("Backend running on port 3000"));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, "0.0.0.0",  () => console.log(`Backend running on port ${PORT}`));

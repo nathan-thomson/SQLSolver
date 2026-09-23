@@ -54,7 +54,11 @@
         });
 
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || "Request failed");
+        if (!res.ok) {
+            const error = new Error(data.error || "Request failed");
+            error.status = res.status;
+            throw error;
+        }
         return data;
     }
 
@@ -79,7 +83,7 @@
             localStorage.setItem("username", data.user.username);
             window.location.href = "challenges.html";
         } catch (err) {
-            showFadePopup("Incorrect Username or Password");
+            showFadePopup(err.status === 429 ? err.message : "Incorrect Username or Password");
         }
     });
 
@@ -94,7 +98,7 @@
             localStorage.setItem("username", data.user.username);
             window.location.href = "challenges.html";
         } catch (err) {
-            showFadePopup("Username or Password already exists");
+            showFadePopup(err.status === 429 ? err.message : "Username or Password already exists");
         }
     });
 </script>
